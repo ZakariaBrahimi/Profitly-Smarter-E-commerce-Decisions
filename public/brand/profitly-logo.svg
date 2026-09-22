@@ -1,0 +1,30 @@
+<svg width="180" height="44" viewBox="0 0 180 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="profitly-logo-gradient" x1="2" y1="2" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#7C3AED" />
+    </linearGradient>
+  </defs>
+  <circle cx="18" cy="18" r="18" fill="url(#profitly-logo-gradient)" />
+  <g stroke="white" stroke-width="2.3" stroke-linecap="round">
+    <path d="M11.2 20.6V24" opacity="0.75" />
+    <path d="M18 16.8V24" opacity="0.9" />
+    <path d="M24.8 11.8V24" />
+  </g>
+  <path
+    d="M10.6 18.2L16.4 12.8L20.2 16.3L25 11.2"
+    stroke="white"
+    stroke-width="2.3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M21.6 11.2H25V14.6"
+    stroke="white"
+    stroke-width="2.3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <text x="44" y="21" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="19" font-weight="700" fill="#172554" letter-spacing="-0.3">Profitly</text>
+  <text x="44" y="34" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="500" fill="#64748B" letter-spacing="0.1">Smarter E-commerce Decisions</text>
+</svg>
