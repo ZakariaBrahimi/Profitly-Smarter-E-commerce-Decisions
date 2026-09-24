@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProfitabilityCalculatorPage } from '@/pages/ProfitabilityCalculatorPage'
+import { PricingCalculatorPage } from '@/pages/PricingCalculatorPage'
 import { ComingSoonPage } from '@/pages/ComingSoonPage'
 
 function App() {
@@ -7,6 +8,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/profitability-calculator" replace />} />
       <Route path="/profitability-calculator" element={<ProfitabilityCalculatorPage />} />
+      <Route path="/pricing-calculator" element={<PricingCalculatorPage />} />
       <Route path="/dashboard" element={<ComingSoonPage title="Dashboard" />} />
       <Route path="/products" element={<ComingSoonPage title="Products" />} />
       <Route path="/campaigns" element={<ComingSoonPage title="Campaigns" />} />
