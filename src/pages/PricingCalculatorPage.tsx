@@ -6,6 +6,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Toast } from '@/components/ui/toast'
 import { PricingInputsPanel } from '@/components/pricing/PricingInputsPanel'
 import { RecommendedPriceCard } from '@/components/pricing/RecommendedPriceCard'
+import { PriceComparison } from '@/components/pricing/PriceComparison'
 import { PricingResultsGrid } from '@/components/pricing/PricingResultsGrid'
 import { OrderSimulation } from '@/components/pricing/OrderSimulation'
 import { PricingScenarios } from '@/components/pricing/PricingScenarios'
@@ -56,9 +57,14 @@ export function PricingCalculatorPage() {
           />
         </div>
 
-        <div className="lg:col-span-1">
-          <div className="lg:sticky lg:top-6">
-            <RecommendedPriceCard result={result} currentCpaUsd={state.inputs.adCostUsd} />
+        <div className="flex flex-col gap-5 lg:col-span-1 lg:gap-6">
+          <div className="lg:sticky lg:top-6 lg:flex lg:flex-col lg:gap-5">
+            <RecommendedPriceCard result={result} targetProfitDzd={state.inputs.targetProfitDzd} />
+            <PriceComparison
+              result={result}
+              currentSellingPriceDzd={state.inputs.sellingPriceDzd}
+              targetProfitDzd={state.inputs.targetProfitDzd}
+            />
           </div>
         </div>
       </div>

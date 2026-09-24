@@ -23,8 +23,8 @@ export function PricingFunnelVisualization({ result }: { result: PricingResult }
     {
       id: 'confirmed',
       label: 'Confirmed',
-      count: Math.round(result.confirmedOrdersPer100),
-      percentage: result.confirmedOrdersPer100,
+      count: Math.round(result.confirmedOrders),
+      percentage: result.confirmedOrders,
       costNote: `Call-center cost applies here: ${formatDzd(result.callCenterCostPerGeneratedOrder * 100)} total for these confirmed orders`,
       icon: PhoneCall,
       tone: 'primary' as const,
@@ -32,8 +32,8 @@ export function PricingFunnelVisualization({ result }: { result: PricingResult }
     {
       id: 'delivered',
       label: 'Delivered',
-      count: Math.round(result.deliveredOrdersPer100),
-      percentage: result.deliveredOrdersPer100,
+      count: Math.round(result.deliveredOrders),
+      percentage: result.deliveredOrders,
       costNote: 'Product, delivery & other costs apply here — this is also where revenue is earned',
       icon: Truck,
       tone: 'success' as const,

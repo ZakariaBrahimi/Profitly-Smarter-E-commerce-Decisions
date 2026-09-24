@@ -3,8 +3,7 @@ import {
   calculateCpaSensitivity,
   calculatePricing,
   calculateProfitAtCpa,
-  getPricingStatus,
-  roundUpToNearest,
+  roundRecommendedPrice,
   type PricingInputs,
 } from './pricing'
 
@@ -30,47 +29,53 @@ function assertFinite(result: Record<string, unknown>) {
   }
 }
 
-describe('calculatePricing — standard case', () => {
+describe('calculatePricing — standard example (section 4 / 8 of the spec)', () => {
   const result = calculatePricing(STANDARD_INPUTS)
 
   it('computes the overall delivered rate as confirmation × delivery', () => {
     expect(result.deliveredRate).toBeCloseTo(0.6, 10)
-  })
-
-  it('projects confirmed/delivered orders per 100 generated', () => {
-    expect(result.confirmedOrdersPer100).toBeCloseTo(80, 10)
-    expect(result.deliveredOrdersPer100).toBeCloseTo(60, 10)
+    expect(result.confirmedOrders).toBeCloseTo(80, 10)
+    expect(result.deliveredOrders).toBeCloseTo(60, 10)
+    expect(result.isPricingAvailable).toBe(true)
   })
 
   it('converts ad cost to DZD', () => {
     expect(result.adCostDzd).toBeCloseTo(325, 6)
   })
 
-  it('computes per-generated-order cost lines', () => {
+  it('computes per-generated-order cost lines and their sum', () => {
     expect(result.productCostPerGeneratedOrder).toBeCloseTo(1320, 6)
     expect(result.callCenterCostPerGeneratedOrder).toBeCloseTo(120, 6)
     expect(result.deliveryCostPerGeneratedOrder).toBeCloseTo(0, 6)
+    expect(result.otherCostPerGeneratedOrder).toBeCloseTo(0, 6)
     expect(result.totalCostPerGeneratedOrder).toBeCloseTo(1765, 6)
   })
 
-  it('computes revenue and profit per generated order at the current selling price', () => {
-    expect(result.revenuePerGeneratedOrder).toBeCloseTo(2520, 6)
-    expect(result.profitPerGeneratedOrder).toBeCloseTo(755, 6)
-  })
-
-  it('computes the required selling price to hit the target profit within the documented range', () => {
+  it('computes the exact required selling price as 4,275 DZD', () => {
     expect(result.requiredSellingPrice).toBeCloseTo(4275, 6)
-    expect(result.requiredSellingPrice).toBeGreaterThanOrEqual(4200)
-    expect(result.requiredSellingPrice).toBeLessThanOrEqual(4275)
   })
 
-  it('rounds the recommended price up to the nearest step, never under the exact requirement', () => {
-    expect(result.recommendedSellingPrice).toBeGreaterThanOrEqual(result.requiredSellingPrice)
-    expect(result.recommendedSellingPrice % 10).toBe(0)
+  it('rounds the suggested price up to the nearest 10, never below the requirement', () => {
+    expect(result.suggestedSellingPrice).toBe(4280)
+    expect(result.suggestedSellingPrice).toBeGreaterThanOrEqual(result.requiredSellingPrice)
   })
 
   it('computes break-even price independent of target profit', () => {
     expect(result.breakEvenPrice).toBeCloseTo(1765 / 0.6, 6)
+  })
+
+  it('computes the higher-margin price at 1.25× target profit', () => {
+    expect(result.higherMarginPrice).toBeCloseTo((1765 + 1000) / 0.6, 6)
+  })
+
+  it('computes current profit at the current selling price (755 DZD)', () => {
+    expect(result.revenuePerGeneratedOrder).toBeCloseTo(2520, 6)
+    expect(result.currentProfitPerGeneratedOrder).toBeCloseTo(755, 6)
+  })
+
+  it('computes price difference and target profit gap exactly as the worked example', () => {
+    expect(result.priceDifference).toBeCloseTo(75, 6) // 4275 - 4200
+    expect(result.targetProfitGap).toBeCloseTo(45, 6) // 800 - 755
   })
 
   it('computes max CPA figures', () => {
@@ -79,103 +84,125 @@ describe('calculatePricing — standard case', () => {
     expect(result.safetyMarginUsd).toBeCloseTo(1080 / 250 - 1.3, 6)
   })
 
-  it('flags the default example as below target (755 < 800)', () => {
-    expect(result.status).toBe('below-target')
-  })
-
   it('builds three dynamic pricing scenarios', () => {
-    const [breakEven, target, higherMargin] = result.scenarios
+    const [breakEven, suggested, higherMargin] = result.scenarios
     expect(breakEven.profit).toBe(0)
     expect(breakEven.sellingPrice).toBeCloseTo(result.breakEvenPrice, 6)
-    expect(target.profit).toBe(800)
-    expect(target.sellingPrice).toBeCloseTo(result.requiredSellingPrice, 6)
+    expect(suggested.profit).toBe(800)
+    expect(suggested.sellingPrice).toBeCloseTo(result.requiredSellingPrice, 6)
+    expect(higherMargin.label).toBe('Higher Margin Scenario')
     expect(higherMargin.profit).toBe(1000)
-    expect(higherMargin.sellingPrice).toBeGreaterThan(target.sellingPrice)
+    expect(higherMargin.sellingPrice).toBeCloseTo(result.higherMarginPrice, 6)
   })
 
   it('never produces NaN or Infinity', () => assertFinite(result as unknown as Record<string, unknown>))
 })
 
-describe('calculatePricing — edge cases', () => {
-  it('handles 100% confirmation and 100% delivery', () => {
-    const result = calculatePricing({ ...STANDARD_INPUTS, confirmationRate: 1, deliveryRate: 1 })
-    expect(result.deliveredRate).toBe(1)
-    assertFinite(result as unknown as Record<string, unknown>)
+describe('calculatePricing — section 10 required scenarios', () => {
+  it('1. standard example matches the documented numbers', () => {
+    const result = calculatePricing(STANDARD_INPUTS)
+    expect(result.requiredSellingPrice).toBeCloseTo(4275, 6)
+    expect(result.suggestedSellingPrice).toBe(4280)
   })
 
-  it('handles 0% confirmation without dividing by zero', () => {
-    const result = calculatePricing({ ...STANDARD_INPUTS, confirmationRate: 0 })
-    expect(result.deliveredRate).toBe(0)
-    expect(result.breakEvenPrice).toBe(0)
-    expect(result.requiredSellingPrice).toBe(0)
-    expect(result.recommendedSellingPrice).toBe(0)
-    expect(result.profitPerDeliveredOrder).toBe(0)
-    expect(result.profitMargin).toBe(0)
-    // Ad spend with zero conversions is a pure loss.
-    expect(result.status).toBe('loss')
-    assertFinite(result as unknown as Record<string, unknown>)
-  })
-
-  it('handles 0% delivery without dividing by zero', () => {
+  it('2. zero delivery rate — pricing unavailable, no divide-by-zero', () => {
     const result = calculatePricing({ ...STANDARD_INPUTS, deliveryRate: 0 })
     expect(result.deliveredRate).toBe(0)
+    expect(result.isPricingAvailable).toBe(false)
     expect(result.breakEvenPrice).toBe(0)
-    expect(result.status).toBe('loss')
+    expect(result.requiredSellingPrice).toBe(0)
+    expect(result.suggestedSellingPrice).toBe(0)
     assertFinite(result as unknown as Record<string, unknown>)
   })
 
-  it('handles a very high CPA (deep loss, still finite)', () => {
-    const result = calculatePricing({ ...STANDARD_INPUTS, adCostUsd: 500 })
-    expect(result.profitPerGeneratedOrder).toBeLessThan(0)
-    expect(result.status).toBe('loss')
+  it('3. zero confirmation rate — pricing unavailable, no divide-by-zero', () => {
+    const result = calculatePricing({ ...STANDARD_INPUTS, confirmationRate: 0 })
+    expect(result.deliveredRate).toBe(0)
+    expect(result.isPricingAvailable).toBe(false)
+    expect(result.confirmedOrders).toBe(0)
     assertFinite(result as unknown as Record<string, unknown>)
   })
 
-  it('handles zero call-center cost', () => {
-    const result = calculatePricing({ ...STANDARD_INPUTS, callCenterCostDzd: 0 })
-    expect(result.callCenterCostPerGeneratedOrder).toBe(0)
-    assertFinite(result as unknown as Record<string, unknown>)
-  })
-
-  it('handles high delivery cost', () => {
-    const result = calculatePricing({ ...STANDARD_INPUTS, deliveryCostDzd: 5000 })
-    expect(result.deliveryCostPerGeneratedOrder).toBeCloseTo(5000 * 0.6, 6)
-    expect(result.status).toBe('loss')
-    assertFinite(result as unknown as Record<string, unknown>)
-  })
-
-  it('handles high product cost', () => {
-    const result = calculatePricing({ ...STANDARD_INPUTS, productCostDzd: 100000 })
-    expect(result.profitPerGeneratedOrder).toBeLessThan(0)
-    assertFinite(result as unknown as Record<string, unknown>)
-  })
-
-  it('handles target profit of 0 (required price collapses to break-even)', () => {
+  it('4. zero target profit collapses required price to break-even', () => {
     const result = calculatePricing({ ...STANDARD_INPUTS, targetProfitDzd: 0 })
     expect(result.requiredSellingPrice).toBeCloseTo(result.breakEvenPrice, 6)
     expect(result.scenarios[1].profit).toBe(0)
   })
 
-  it('handles a target profit far above what any reasonable price could sustain', () => {
-    const result = calculatePricing({ ...STANDARD_INPUTS, targetProfitDzd: 1_000_000 })
+  it('5. zero advertising cost removes ad cost from the total', () => {
+    const result = calculatePricing({ ...STANDARD_INPUTS, adCostUsd: 0 })
+    expect(result.adCostDzd).toBe(0)
+    expect(result.totalCostPerGeneratedOrder).toBeCloseTo(1320 + 120, 6)
+    assertFinite(result as unknown as Record<string, unknown>)
+  })
+
+  it('6. free delivery (delivery cost = 0) is handled with no side effects', () => {
+    const result = calculatePricing({ ...STANDARD_INPUTS, deliveryCostDzd: 0 })
+    expect(result.deliveryCostPerGeneratedOrder).toBe(0)
+    assertFinite(result as unknown as Record<string, unknown>)
+  })
+
+  it('7. very high product cost pushes required price up but stays finite', () => {
+    const result = calculatePricing({ ...STANDARD_INPUTS, productCostDzd: 1_000_000 })
     expect(result.requiredSellingPrice).toBeGreaterThan(1_000_000)
-    expect(result.status).toBe('below-target')
+    expect(result.currentProfitPerGeneratedOrder).toBeLessThan(0)
     assertFinite(result as unknown as Record<string, unknown>)
   })
 
-  it('handles decimal percentages', () => {
-    const result = calculatePricing({ ...STANDARD_INPUTS, confirmationRate: 0.823, deliveryRate: 0.716 })
-    expect(result.deliveredRate).toBeCloseTo(0.823 * 0.716, 10)
+  it('8. current price below suggested price — positive gap and difference', () => {
+    const result = calculatePricing({ ...STANDARD_INPUTS, sellingPriceDzd: 4000 })
+    expect(result.priceDifference).toBeGreaterThan(0)
+    expect(result.targetProfitGap).toBeGreaterThan(0)
+  })
+
+  it('9. current price above suggested price — negative gap and difference', () => {
+    const result = calculatePricing({ ...STANDARD_INPUTS, sellingPriceDzd: 5000 })
+    expect(result.priceDifference).toBeLessThan(0)
+    expect(result.targetProfitGap).toBeLessThan(0)
+    expect(result.currentProfitPerGeneratedOrder).toBeGreaterThan(result.scenarios[1].profit)
+  })
+
+  it('10. rounding never reduces the actual profit below the target', () => {
+    for (const increment of [10, 50, 100] as const) {
+      const result = calculatePricing(STANDARD_INPUTS, increment)
+      const profitAtSuggestedPrice =
+        result.suggestedSellingPrice * result.deliveredRate - result.totalCostPerGeneratedOrder
+      expect(profitAtSuggestedPrice).toBeGreaterThanOrEqual(STANDARD_INPUTS.targetProfitDzd - 1e-9)
+    }
+  })
+})
+
+describe('calculatePricing — additional edge cases', () => {
+  it('handles negative inputs by clamping instead of propagating negatives', () => {
+    const result = calculatePricing({
+      ...STANDARD_INPUTS,
+      productCostDzd: -500,
+      callCenterCostDzd: -50,
+      sellingPriceDzd: -100,
+    })
+    expect(result.productCostPerGeneratedOrder).toBe(0)
+    expect(result.callCenterCostPerGeneratedOrder).toBe(0)
+    expect(result.revenuePerGeneratedOrder).toBe(0)
     assertFinite(result as unknown as Record<string, unknown>)
   })
 
-  it('handles a different exchange rate / currency assumption', () => {
-    const result = calculatePricing({ ...STANDARD_INPUTS, exchangeRate: 135 })
-    expect(result.adCostDzd).toBeCloseTo(1.3 * 135, 6)
+  it('handles "empty" inputs (NaN from a blank field) without ever producing NaN', () => {
+    const result = calculatePricing({
+      ...STANDARD_INPUTS,
+      productCostDzd: Number.NaN,
+      targetProfitDzd: Number.NaN,
+      sellingPriceDzd: Number.NaN,
+      exchangeRate: Number.NaN,
+    })
     assertFinite(result as unknown as Record<string, unknown>)
   })
 
-  it('never divides by zero even when exchange rate is 0', () => {
+  it('handles extremely large values without overflowing to Infinity', () => {
+    const result = calculatePricing({ ...STANDARD_INPUTS, sellingPriceDzd: 1e12, productCostDzd: 1e12 })
+    assertFinite(result as unknown as Record<string, unknown>)
+  })
+
+  it('handles a zero exchange rate without dividing by zero', () => {
     const result = calculatePricing({ ...STANDARD_INPUTS, exchangeRate: 0 })
     expect(result.adCostDzd).toBe(0)
     expect(result.breakEvenCpaUsd).toBe(0)
@@ -183,43 +210,46 @@ describe('calculatePricing — edge cases', () => {
     assertFinite(result as unknown as Record<string, unknown>)
   })
 
-  it('never divides by zero when confirmation, delivery and exchange rate are all 0', () => {
-    const result = calculatePricing({ ...STANDARD_INPUTS, confirmationRate: 0, deliveryRate: 0, exchangeRate: 0 })
-    assertFinite(result as unknown as Record<string, unknown>)
+  it('handles zero call-center cost and zero other costs', () => {
+    const result = calculatePricing({ ...STANDARD_INPUTS, callCenterCostDzd: 0, otherCostDzd: 0 })
+    expect(result.callCenterCostPerGeneratedOrder).toBe(0)
+    expect(result.otherCostPerGeneratedOrder).toBe(0)
   })
 
-  it('clamps out-of-range fractions instead of producing nonsense', () => {
+  it('handles confirmation and delivery both at 0 together with a 0 exchange rate', () => {
+    const result = calculatePricing({ ...STANDARD_INPUTS, confirmationRate: 0, deliveryRate: 0, exchangeRate: 0 })
+    assertFinite(result as unknown as Record<string, unknown>)
+    expect(result.isPricingAvailable).toBe(false)
+  })
+
+  it('clamps out-of-range fractions (>100% or negative) instead of producing nonsense', () => {
     const result = calculatePricing({ ...STANDARD_INPUTS, confirmationRate: 1.5, deliveryRate: -0.2 })
     expect(result.deliveredRate).toBe(0)
     assertFinite(result as unknown as Record<string, unknown>)
   })
-
-  it('never produces a negative recommended price', () => {
-    const result = calculatePricing({ ...STANDARD_INPUTS, targetProfitDzd: -100000 })
-    expect(result.recommendedSellingPrice).toBeGreaterThanOrEqual(0)
-  })
 })
 
-describe('roundUpToNearest', () => {
-  it('rounds up to the nearest step', () => {
-    expect(roundUpToNearest(4273, 10)).toBe(4280)
-    expect(roundUpToNearest(4270, 10)).toBe(4270)
-    expect(roundUpToNearest(4273, 50)).toBe(4300)
-    expect(roundUpToNearest(4273, 100)).toBe(4300)
+describe('roundRecommendedPrice', () => {
+  it('always rounds up, matching the documented examples', () => {
+    expect(roundRecommendedPrice(4275, 10)).toBe(4280)
+    expect(roundRecommendedPrice(4281, 10)).toBe(4290)
+    expect(roundRecommendedPrice(4301, 10)).toBe(4310)
+    expect(roundRecommendedPrice(4275, 50)).toBe(4300)
+    expect(roundRecommendedPrice(4270, 10)).toBe(4270)
   })
 
-  it('returns 0 for non-positive input', () => {
-    expect(roundUpToNearest(0, 10)).toBe(0)
-    expect(roundUpToNearest(-5, 10)).toBe(0)
+  it('never rounds below the calculated price', () => {
+    for (const price of [1, 9.5, 100, 4275, 999999]) {
+      for (const increment of [10, 50, 100] as const) {
+        expect(roundRecommendedPrice(price, increment)).toBeGreaterThanOrEqual(price)
+      }
+    }
   })
-})
 
-describe('getPricingStatus', () => {
-  it('classifies loss, below-target and profitable', () => {
-    expect(getPricingStatus(-10, 800)).toBe('loss')
-    expect(getPricingStatus(400, 800)).toBe('below-target')
-    expect(getPricingStatus(800, 800)).toBe('profitable')
-    expect(getPricingStatus(900, 800)).toBe('profitable')
+  it('returns 0 for non-positive or non-finite input', () => {
+    expect(roundRecommendedPrice(0, 10)).toBe(0)
+    expect(roundRecommendedPrice(-5, 10)).toBe(0)
+    expect(roundRecommendedPrice(Number.NaN, 10)).toBe(0)
   })
 })
 
@@ -245,5 +275,10 @@ describe('calculateProfitAtCpa / calculateCpaSensitivity', () => {
     const rows = calculateCpaSensitivity(STANDARD_INPUTS)
     const breakEvenRow = rows.find((r) => r.isBreakEven)!
     expect(breakEvenRow.profitPerGeneratedOrder).toBeCloseTo(0, 4)
+  })
+
+  it('never produces NaN even with degenerate inputs', () => {
+    const rows = calculateCpaSensitivity({ ...STANDARD_INPUTS, confirmationRate: 0, exchangeRate: 0 })
+    rows.forEach((row) => expect(Number.isFinite(row.profitPerGeneratedOrder)).toBe(true))
   })
 })

@@ -50,3 +50,9 @@ export function formatSignedPercent(delta: number): string {
   const sign = delta > 0 ? '+' : delta < 0 ? '-' : ''
   return `${sign}${percentFormatter.format(Math.abs(delta) * 100)}%`
 }
+
+export function formatSignedDzd(value: number): string {
+  if (!Number.isFinite(value)) return '0 DZD'
+  const sign = value > 0 ? '+' : value < 0 ? '-' : ''
+  return `${sign}${dzdFormatter.format(Math.abs(Math.round(value)))} DZD`
+}

@@ -8,7 +8,7 @@ import type { PricingResult } from '@/lib/calculations/pricing'
 const SIMULATION_SIZE = 100
 
 export function OrderSimulation({ result }: { result: PricingResult }) {
-  const profitTone = result.profitPerGeneratedOrder >= 0 ? 'positive' : 'negative'
+  const profitTone = result.currentProfitPerGeneratedOrder >= 0 ? 'positive' : 'negative'
 
   return (
     <SectionCard
@@ -28,7 +28,7 @@ export function OrderSimulation({ result }: { result: PricingResult }) {
           <MetricCard label="Other costs" value={formatDzd(result.otherCostPerGeneratedOrder * SIMULATION_SIZE)} />
           <MetricCard
             label="Net profit"
-            value={formatDzd(result.profitPerGeneratedOrder * SIMULATION_SIZE)}
+            value={formatDzd(result.currentProfitPerGeneratedOrder * SIMULATION_SIZE)}
             tone={profitTone}
           />
         </div>

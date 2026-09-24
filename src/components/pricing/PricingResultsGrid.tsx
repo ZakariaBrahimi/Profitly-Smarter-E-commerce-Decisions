@@ -5,7 +5,7 @@ import { formatDzd, formatPercent, formatUsd } from '@/lib/formatting/currency'
 import type { PricingResult } from '@/lib/calculations/pricing'
 
 export function PricingResultsGrid({ result }: { result: PricingResult }) {
-  const profitTone = result.profitPerGeneratedOrder >= 0 ? 'positive' : 'negative'
+  const profitTone = result.currentProfitPerGeneratedOrder >= 0 ? 'positive' : 'negative'
 
   return (
     <SectionCard
@@ -24,7 +24,7 @@ export function PricingResultsGrid({ result }: { result: PricingResult }) {
         />
         <MetricCard
           label="Profit / generated order"
-          value={formatDzd(result.profitPerGeneratedOrder)}
+          value={formatDzd(result.currentProfitPerGeneratedOrder)}
           tone={profitTone}
         />
         <MetricCard
