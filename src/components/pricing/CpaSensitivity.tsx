@@ -1,7 +1,9 @@
 import { Activity } from 'lucide-react'
 import { SectionCard } from '@/components/ui/section-card'
+import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { cn } from '@/lib/utils'
 import { formatDzd, formatUsd } from '@/lib/formatting/currency'
+import { METRIC_TOOLTIPS } from '@/components/pricing/metricTooltips'
 import type { CpaSensitivityRow, PricingResult } from '@/lib/calculations/pricing'
 
 const TONE_ROW_CLASSES: Record<CpaSensitivityRow['tone'], string> = {
@@ -30,7 +32,12 @@ export function CpaSensitivity({ rows, currentCpaUsd, result, onSelectCpa }: Cpa
             <thead>
               <tr className="bg-slate-50 text-[11px] font-medium uppercase tracking-wide text-muted">
                 <th className="px-4 py-2.5">CPA</th>
-                <th className="px-4 py-2.5 text-right">Profit / generated order</th>
+                <th className="px-4 py-2.5 text-right">
+                  <span className="inline-flex items-center gap-1">
+                    Profit / generated order
+                    <InfoTooltip text={METRIC_TOOLTIPS.profitPerGeneratedOrder} />
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -64,18 +71,32 @@ export function CpaSensitivity({ rows, currentCpaUsd, result, onSelectCpa }: Cpa
             </tbody>
           </table>
         </div>
+        <p className="text-xs text-muted">
+          <span className="font-medium text-success">Green</span> = at or above target profit ·{' '}
+          <span className="font-medium text-warning">amber</span> = profitable but below target ·{' '}
+          <span className="font-medium text-danger">red</span> = losing money.
+        </p>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="flex flex-col gap-0.5 rounded-lg bg-slate-50 px-3 py-2.5">
-            <span className="text-[11px] font-medium text-muted">Current CPA</span>
+            <span className="flex items-center gap-1 text-[11px] font-medium text-muted">
+              Current CPA
+              <InfoTooltip text={METRIC_TOOLTIPS.currentCpa} />
+            </span>
             <span className="text-sm font-semibold tabular-nums text-ink">{formatUsd(currentCpaUsd)}</span>
           </div>
           <div className="flex flex-col gap-0.5 rounded-lg bg-slate-50 px-3 py-2.5">
-            <span className="text-[11px] font-medium text-muted">Break-even CPA</span>
+            <span className="flex items-center gap-1 text-[11px] font-medium text-muted">
+              Break-even CPA
+              <InfoTooltip text={METRIC_TOOLTIPS.maxCpaBreakEven} />
+            </span>
             <span className="text-sm font-semibold tabular-nums text-ink">{formatUsd(result.breakEvenCpaUsd)}</span>
           </div>
           <div className="flex flex-col gap-0.5 rounded-lg bg-slate-50 px-3 py-2.5">
-            <span className="text-[11px] font-medium text-muted">CPA safety margin</span>
+            <span className="flex items-center gap-1 text-[11px] font-medium text-muted">
+              CPA safety margin
+              <InfoTooltip text={METRIC_TOOLTIPS.cpaSafetyMargin} />
+            </span>
             <span
               className={cn(
                 'text-sm font-semibold tabular-nums',

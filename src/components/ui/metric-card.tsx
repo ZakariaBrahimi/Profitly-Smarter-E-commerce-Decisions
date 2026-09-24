@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { InfoTooltip } from '@/components/ui/info-tooltip'
 
 export interface MetricCardProps {
   label: string
@@ -10,6 +11,8 @@ export interface MetricCardProps {
   tone?: 'default' | 'positive' | 'negative' | 'accent'
   size?: 'sm' | 'lg'
   className?: string
+  /** Plain-language explanation shown in an info tooltip next to the label. */
+  tooltip?: string
 }
 
 const TONE_CLASSES: Record<NonNullable<MetricCardProps['tone']>, string> = {
@@ -26,11 +29,23 @@ const VALUE_TONE_CLASSES: Record<NonNullable<MetricCardProps['tone']>, string> =
   accent: 'text-primary-dark',
 }
 
-export function MetricCard({ label, value, subValue, icon, tone = 'default', size = 'sm', className }: MetricCardProps) {
+export function MetricCard({
+  label,
+  value,
+  subValue,
+  icon,
+  tone = 'default',
+  size = 'sm',
+  className,
+  tooltip,
+}: MetricCardProps) {
   return (
     <div className={cn('rounded-lg border p-4 flex flex-col gap-1.5', TONE_CLASSES[tone], className)}>
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-medium uppercase tracking-wide text-muted">{label}</span>
+        <span className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-muted">
+          {label}
+          {tooltip && <InfoTooltip text={tooltip} />}
+        </span>
         {icon && <span className="text-muted/70">{icon}</span>}
       </div>
       <motion.span

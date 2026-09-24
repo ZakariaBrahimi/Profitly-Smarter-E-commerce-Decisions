@@ -2,9 +2,11 @@ import * as React from 'react'
 import { Tag, ChevronDown, AlertCircle } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { SectionCard } from '@/components/ui/section-card'
+import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { PriceBreakdown } from '@/components/pricing/PriceBreakdown'
 import { cn } from '@/lib/utils'
 import { formatDzd } from '@/lib/formatting/currency'
+import { METRIC_TOOLTIPS } from '@/components/pricing/metricTooltips'
 import type { PricingResult } from '@/lib/calculations/pricing'
 
 export function RecommendedPriceCard({
@@ -59,11 +61,17 @@ export function RecommendedPriceCard({
 
         <div className="flex flex-col gap-1.5 rounded-lg bg-slate-50 px-3.5 py-3 text-[13px]">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-muted">Calculated minimum</span>
+            <span className="flex items-center gap-1 text-muted">
+              Calculated minimum
+              <InfoTooltip text={METRIC_TOOLTIPS.calculatedMinimum} />
+            </span>
             <span className="font-semibold tabular-nums text-ink">{formatDzd(result.requiredSellingPrice)}</span>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-muted">Rounded commercially to</span>
+            <span className="flex items-center gap-1 text-muted">
+              Rounded commercially to
+              <InfoTooltip text={METRIC_TOOLTIPS.roundedCommercially} />
+            </span>
             <span className="font-semibold tabular-nums text-ink">{formatDzd(result.suggestedSellingPrice)}</span>
           </div>
         </div>
