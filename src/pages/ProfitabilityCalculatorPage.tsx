@@ -19,7 +19,7 @@ import { isProductInfoComplete } from '@/lib/validation/calculator'
 import { listTemplates, type CalculatorTemplate } from '@/lib/storage/templates'
 
 export function ProfitabilityCalculatorPage() {
-  const { state, setInput, resetAll, setMonthlyPeriod, setCustomDays, loadTemplate } = useCalculatorState()
+  const { state, setInput, resetAll, setResultsPeriod, setCustomDays, loadTemplate } = useCalculatorState()
 
   const [resetDialogOpen, setResetDialogOpen] = React.useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = React.useState(false)
@@ -99,9 +99,9 @@ export function ProfitabilityCalculatorPage() {
 
           <Results
             result={result}
-            period={state.monthlyPeriod}
+            period={state.resultsPeriod}
             customDays={state.customDays}
-            onPeriodChange={setMonthlyPeriod}
+            onPeriodChange={setResultsPeriod}
             onCustomDaysChange={setCustomDays}
           />
 

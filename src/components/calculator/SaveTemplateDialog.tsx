@@ -22,15 +22,15 @@ export interface SaveTemplateDialogProps {
 }
 
 export function SaveTemplateDialog({ open, onOpenChange, inputs, onSaved }: SaveTemplateDialogProps) {
-  const [name, setName] = React.useState(inputs.productName)
+  const [name, setName] = React.useState('')
   const [description, setDescription] = React.useState('')
 
   React.useEffect(() => {
     if (open) {
-      setName(inputs.productName)
+      setName('')
       setDescription('')
     }
-  }, [open, inputs.productName])
+  }, [open])
 
   const handleSave = () => {
     const trimmed = name.trim()

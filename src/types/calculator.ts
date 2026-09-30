@@ -1,11 +1,8 @@
 import type { ProfitabilityInputs } from '@/lib/calculations/profitability'
 
-export interface CalculatorInputs extends ProfitabilityInputs {
-  productName: string
-}
+export type CalculatorInputs = ProfitabilityInputs
 
 export const DEFAULT_CALCULATOR_INPUTS: CalculatorInputs = {
-  productName: 'T-shirt Khalid Ibn Al-Walid',
   purchaseCostDzd: 2200,
   sellingPriceDzd: 3990,
   dailyAdBudgetUsd: 20,
@@ -18,5 +15,10 @@ export const DEFAULT_CALCULATOR_INPUTS: CalculatorInputs = {
   daysPerMonth: 30,
 }
 
-export const MONTHLY_PERIOD_OPTIONS = [7, 30, 60, 90] as const
-export type MonthlyPeriodOption = (typeof MONTHLY_PERIOD_OPTIONS)[number] | 'custom'
+export type ResultsPeriod = 'daily' | 'weekly' | 'monthly' | 'custom'
+
+export const RESULTS_PERIOD_DAYS: Record<Exclude<ResultsPeriod, 'custom'>, number> = {
+  daily: 1,
+  weekly: 7,
+  monthly: 30,
+}
