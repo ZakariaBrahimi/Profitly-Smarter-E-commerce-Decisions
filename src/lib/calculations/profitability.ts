@@ -183,3 +183,34 @@ export function calculateMaxAdCostForTargetProfit(
     ((marginPerDeliveredOrderDzd - targetProfitPerOrderDzd) * conversionRate) / inputs.exchangeRate
   return Math.max(0, maxAdCost)
 }
+
+/**
+ * The selling price required to hit a target profit per delivered order,
+ * given the product cost, fixed costs, and current ad cost / funnel rates.
+ * This is the inverse of calculateProfitability: instead of "what profit do
+ * I make at this price", it answers "what price do I need to charge".
+ */
+export function calculateRecommendedSellingPrice(
+  inputs: Pick<
+    ProfitabilityInputs,
+    | 'purchaseCostDzd'
+    | 'confirmationFeeDzd'
+    | 'deliveryCostDzd'
+    | 'adCostPerGeneratedOrderUsd'
+    | 'confirmationRate'
+    | 'deliveryRate'
+    | 'exchangeRate'
+  >,
+  targetProfitPerOrderDzd: number,
+): number {
+  const conversionRate = inputs.confirmationRate * inputs.deliveryRate
+  if (conversionRate <= 0) return 0
+  const realAdCostPerDeliveredOrderDzd = (inputs.adCostPerGeneratedOrderUsd * inputs.exchangeRate) / conversionRate
+  return (
+    inputs.purchaseCostDzd +
+    inputs.confirmationFeeDzd +
+    inputs.deliveryCostDzd +
+    realAdCostPerDeliveredOrderDzd +
+    targetProfitPerOrderDzd
+  )
+}
