@@ -7,15 +7,11 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Toast } from '@/components/ui/toast'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CalculatorInputs } from '@/components/calculator/CalculatorInputs'
-import { GlobalSettings } from '@/components/calculator/GlobalSettings'
 import { OrderFunnel } from '@/components/calculator/OrderFunnel'
-import { DailyResults } from '@/components/calculator/DailyResults'
-import { MonthlyResults } from '@/components/calculator/MonthlyResults'
+import { Results } from '@/components/calculator/Results'
 import { QuickSummary } from '@/components/calculator/QuickSummary'
 import { BreakEvenAnalysis } from '@/components/calculator/BreakEvenAnalysis'
 import { TargetProfit } from '@/components/calculator/TargetProfit'
-import { WhatIfSimulator } from '@/components/calculator/WhatIfSimulator'
-import { ProjectedResults } from '@/components/calculator/ProjectedResults'
 import { SaveTemplateDialog } from '@/components/calculator/SaveTemplateDialog'
 import { useCalculatorState } from '@/hooks/useCalculatorState'
 import { calculateProfitability } from '@/lib/calculations/profitability'
@@ -23,16 +19,7 @@ import { isProductInfoComplete } from '@/lib/validation/calculator'
 import { listTemplates, type CalculatorTemplate } from '@/lib/storage/templates'
 
 export function ProfitabilityCalculatorPage() {
-  const {
-    state,
-    setInput,
-    setWhatIf,
-    resetWhatIfToCurrent,
-    resetAll,
-    setMonthlyPeriod,
-    setCustomDays,
-    loadTemplate,
-  } = useCalculatorState()
+  const { state, setInput, resetAll, setMonthlyPeriod, setCustomDays, loadTemplate } = useCalculatorState()
 
   const [resetDialogOpen, setResetDialogOpen] = React.useState(false)
   const [saveDialogOpen, setSaveDialogOpen] = React.useState(false)
@@ -51,20 +38,7 @@ export function ProfitabilityCalculatorPage() {
 
   const result = React.useMemo(() => calculateProfitability(state.inputs), [state.inputs])
 
-  const scenarioResult = React.useMemo(
-    () =>
-      calculateProfitability({
-        ...state.inputs,
-        adCostPerGeneratedOrderUsd: state.whatIf.adCostPerGeneratedOrderUsd,
-        confirmationRate: state.whatIf.confirmationRate,
-        deliveryRate: state.whatIf.deliveryRate,
-        sellingPriceDzd: state.whatIf.sellingPriceDzd,
-      }),
-    [state.inputs, state.whatIf],
-  )
-
   const productComplete = isProductInfoComplete(state.inputs)
-  const monthlyDays = state.monthlyPeriod === 'custom' ? state.customDays : state.monthlyPeriod
 
   return (
     <AppShell
@@ -123,11 +97,7 @@ export function ProfitabilityCalculatorPage() {
             deliveryRate={state.inputs.deliveryRate}
           />
 
-          <GlobalSettings />
-
-          <DailyResults result={result} />
-
-          <MonthlyResults
+          <Results
             result={result}
             period={state.monthlyPeriod}
             customDays={state.customDays}
@@ -147,16 +117,11 @@ export function ProfitabilityCalculatorPage() {
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:mt-6 lg:grid-cols-2 lg:gap-6">
-        <WhatIfSimulator whatIf={state.whatIf} onChange={setWhatIf} onReset={resetWhatIfToCurrent} />
-        <ProjectedResults current={result} scenario={scenarioResult} days={monthlyDays} />
-      </div>
-
       <ConfirmDialog
         open={resetDialogOpen}
         onOpenChange={setResetDialogOpen}
         title="Reset calculator?"
-        description="This restores every field to its default value. Your what-if scenario will also reset."
+        description="This restores every field to its default value."
         confirmLabel="Reset"
         onConfirm={() => {
           resetAll()

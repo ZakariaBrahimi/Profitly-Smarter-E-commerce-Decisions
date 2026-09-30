@@ -18,21 +18,5 @@ export const DEFAULT_CALCULATOR_INPUTS: CalculatorInputs = {
   daysPerMonth: 30,
 }
 
-export interface WhatIfInputs {
-  adCostPerGeneratedOrderUsd: number
-  confirmationRate: number
-  deliveryRate: number
-  sellingPriceDzd: number
-}
-
-export function whatIfFromCalculator(inputs: CalculatorInputs): WhatIfInputs {
-  return {
-    adCostPerGeneratedOrderUsd: inputs.adCostPerGeneratedOrderUsd,
-    confirmationRate: inputs.confirmationRate,
-    deliveryRate: inputs.deliveryRate,
-    sellingPriceDzd: inputs.sellingPriceDzd,
-  }
-}
-
 export const MONTHLY_PERIOD_OPTIONS = [7, 30, 60, 90] as const
 export type MonthlyPeriodOption = (typeof MONTHLY_PERIOD_OPTIONS)[number] | 'custom'
